@@ -26,9 +26,8 @@ class Grid
 public:
 	sf::Vector2f GridWorldSize;
 	float NodeDiameter;
-
 	float GridSizeX, GridSizeY;
-
+	sf::Vector2f StartingPoint;
 	std::map<std::tuple<float, float>, Node> Nodes;
 
 	Grid() = default;
@@ -42,20 +41,34 @@ public:
 
 	void CreateGrid()
 	{
-		sf::Vector2f startingPoint = { 1920 / 3, 1080 / 5};
+		StartingPoint = { 1920 / 3, 1080 / 5};
 		for (int i = 0; i < GridSizeX; i++)
 		{
 			for (int j = 0; j < GridSizeY; j++)
 			{
-				sf::Vector2f actualPos = { startingPoint.x + (NodeDiameter * i), startingPoint.y + (NodeDiameter * j) };
+				sf::Vector2f actualPos = { StartingPoint.x + (NodeDiameter * i), StartingPoint.y + (NodeDiameter * j) };
 				Nodes[{actualPos.x, actualPos.y}] = Node(true, actualPos, NodeDiameter);
 			}
 		}
 	}
 
-	Node NodeFromWorldPoint(const sf::Vector2f worldPosition)
+	Node& NodeFromWorldPoint(const sf::Vector2f worldPosition)
 	{
-		// TODO
+		int differenceX = (worldPosition.x - StartingPoint.x);
+		int differenceY = (worldPosition.y - StartingPoint.y);
+		int diffDividedX = differenceX / NodeDiameter;
+		int diffDividedY = differenceY / NodeDiameter;
+
+		if (differenceX > NodeDiameter)
+			differenceX -= NodeDiameter * diffDividedX;
+
+		if (differenceY > NodeDiameter)
+			differenceY -= NodeDiameter * diffDividedY;
+
+		int x = worldPosition.x - differenceX;
+		int y = worldPosition.y - differenceY;
+
+		return Nodes[{(float)x, (float)y}];
 	}
 };
 
@@ -80,7 +93,8 @@ int main(int argc, char** argv)
 					continue;
 				
 				sf::Vector2f mousePosition = { (float)event.mouseButton.x, (float)event.mouseButton.y };
-				std::cout << mousePosition.x << " " << mousePosition.y << std::endl;
+				Node& clickedNode = grid.NodeFromWorldPoint(mousePosition);
+				clickedNode.Shape.setFillColor(sf::Color::Cyan);
 			}
 		}
 
