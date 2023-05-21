@@ -345,17 +345,13 @@ public:
 		ImGui::SFML::Shutdown();
 	}
 
-	void CreateWindow(const char* label, const std::function<void()>& func)
+	void CreateWindow(const std::function<void()>& func)
 	{
 		if (ImGui::Begin("DockSpace", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
 		{
 			ImGui::BeginDockspace();
 
-			if (ImGui::BeginDock(label))
-			{
-				func();
-			}
-			ImGui::EndDock();
+			func();
 
 			ImGui::EndDockspace();
 		}
@@ -452,15 +448,36 @@ int main(int argc, char** argv)
 			index++;
 		}
 
+
+		// Viewport as texture
+		static ImVec2 viewportSize{ 500, 500 };
+		sf::RenderTexture renderTexture{};
+		renderTexture.create(viewportSize.x, viewportSize.y);
+		renderTexture.clear(sf::Color::Black);
+
+		for (auto& pair : grid.Nodes)
+		{
+			Node& node = pair.second;
+
+			renderTexture.draw(node.Shape);
+		}
+
 		// ImGui stuff
 		imgui.Update(deltaClock.restart());
 
-		imgui.CreateWindow("testi", []() {
-			ImGui::Text("tervaksia!");
-		});
+		imgui.CreateWindow([&]() {
+			if (ImGui::BeginDock("testi"))
+			{
+				ImGui::Text("MORO");
+			}
+			ImGui::EndDock();
 
-		imgui.CreateWindow("kikkeli", []() {
-			ImGui::Text("pissa!");
+			if (ImGui::BeginDock("viewport"))
+			{
+				viewportSize = ImGui::GetWindowSize();
+				ImGui::Image(renderTexture);
+			}
+			ImGui::EndDock();
 		});
 
 		window.Update([&]() 
@@ -470,7 +487,7 @@ int main(int argc, char** argv)
 				Node& node = pair.second;
 
 				// Draw shapes
-				window.Draw(node.Shape);
+				//window.Draw(node.Shape);
 
 				// Draw ImGui
 				imgui.Render();
