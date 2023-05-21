@@ -2,6 +2,10 @@ workspace "SFMLAstar"
    architecture "x64"
    configurations { "Debug", "Release" }
 
+    group "Dependencies"
+        include "vendor/ImGui"
+    group ""
+
 project "SFMLAstar"
    location "SFMLAstar"
    kind "ConsoleApp"
@@ -14,9 +18,17 @@ project "SFMLAstar"
 
    filter "configurations:*"
       defines { "SFML_STATIC" }
-      includedirs { "vendor/SFML/include" }
+      includedirs
+      { 
+        "vendor/SFML/include",
+        "vendor/ImGui",
+        "vendor/ImGui-SFML"
+    }
+
       libdirs { "vendor/SFML/lib" }
+
       links {
+        "ImGui",
          "opengl32",
          "freetype",
          "winmm",

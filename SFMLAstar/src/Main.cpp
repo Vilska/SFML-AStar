@@ -7,6 +7,10 @@
 
 #include <SFML/Graphics.hpp>
 
+#include <imgui.h>
+#include <imgui-SFML.h>
+#include <imgui_dock.h>
+
 class Node
 {
 public:
@@ -315,8 +319,66 @@ public:
 		}
 	}
 
+	sf::RenderWindow& GetWindow() const { return *m_Window; }
+
 private:
 	sf::RenderWindow* m_Window;
+};
+
+class DearImGui
+{
+public:
+	DearImGui(sf::RenderWindow& window)
+		: m_Window(window) 
+	{
+		Init();
+	}
+
+	void Init()
+	{
+		ImGui::SFML::Init(m_Window);
+		ImGui::InitDock();
+	}
+
+	void Shutdown()
+	{
+		ImGui::SFML::Shutdown();
+	}
+
+	void CreateWindow(const char* label, const std::function<void()>& func)
+	{
+		if (ImGui::Begin("DockSpace", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
+		{
+			ImGui::BeginDockspace();
+
+			if (ImGui::BeginDock(label))
+			{
+				func();
+			}
+			ImGui::EndDock();
+
+			ImGui::EndDockspace();
+		}
+
+		ImGui::End();
+	}
+
+	void Update(sf::Time deltaTime)
+	{
+		ImGui::SFML::Update(m_Window, deltaTime);
+	}
+
+	void Render()
+	{
+		ImGui::SFML::Render(m_Window);
+	}
+
+	void ProcessEvent(const sf::Event& event)
+	{
+		ImGui::SFML::ProcessEvent(m_Window, event);
+	}
+private:
+	sf::RenderWindow& m_Window;
 };
 
 // Main function
@@ -328,6 +390,9 @@ int main(int argc, char** argv)
 	// Create window
 	Window window(sf::Vector2f(1920, 1080), "A*");
 
+	// Initialize ImGui
+	DearImGui imgui(window.GetWindow());
+
 	// Create grid
 	Grid grid(sf::Vector2f(600, 600), 40);
 
@@ -338,10 +403,16 @@ int main(int argc, char** argv)
 	int index = 0;
 	std::vector<Node> startTargetNodes;
 
+	// Clock for deltaTime
+	sf::Clock deltaClock;
+
 	while (running)
 	{
 		window.CheckEvent([&](const sf::Event& event)
 		{
+			// Pass events to ImGui
+			imgui.ProcessEvent(event);
+
 			// Close window when it is supposed to going to be closed
 			if (event.type == sf::Event::Closed)
 			{
@@ -381,13 +452,28 @@ int main(int argc, char** argv)
 			index++;
 		}
 
+		// ImGui stuff
+		imgui.Update(deltaClock.restart());
+
+		imgui.CreateWindow("testi", []() {
+			ImGui::Text("tervaksia!");
+		});
+
+		imgui.CreateWindow("kikkeli", []() {
+			ImGui::Text("pissa!");
+		});
+
 		window.Update([&]() 
 		{
 			for (auto& pair : grid.Nodes)
 			{
 				Node& node = pair.second;
 
+				// Draw shapes
 				window.Draw(node.Shape);
+
+				// Draw ImGui
+				imgui.Render();
 			}
 		});
 
@@ -397,8 +483,9 @@ int main(int argc, char** argv)
 			pathfinding.FindPath(startTargetNodes[0].WorldPosition, startTargetNodes[1].WorldPosition);
 			index++;
 		}
-
 	}
+
+	imgui.Shutdown();
 
 	return 0;
 }
