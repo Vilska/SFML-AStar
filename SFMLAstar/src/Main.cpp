@@ -8,8 +8,7 @@
 #include <SFML/Graphics.hpp>
 
 #include <imgui.h>
-#include <imgui-SFML.h>
-#include <imgui_dock.h>
+#include <backends/imgui_impl_sfml.h>
 
 class Node
 {
@@ -337,7 +336,10 @@ public:
 	void Init()
 	{
 		ImGui::SFML::Init(m_Window);
-		ImGui::InitDock();
+
+		// Inform main ImGui that we are using docking
+		ImGuiIO& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	}
 
 	void Shutdown()
@@ -345,17 +347,35 @@ public:
 		ImGui::SFML::Shutdown();
 	}
 
-	void CreateWindow(const std::function<void()>& func)
+	void CreateDockspace(const std::function<void()>& func)
 	{
-		if (ImGui::Begin("DockSpace", NULL, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
-		{
-			ImGui::BeginDockspace();
+		// Main window flags
+		ImGuiWindowFlags window_flags =
+			ImGuiWindowFlags_MenuBar |
+			ImGuiWindowFlags_NoDocking |
+			ImGuiWindowFlags_NoTitleBar |
+			ImGuiWindowFlags_NoCollapse |
+			ImGuiWindowFlags_NoResize |
+			ImGuiWindowFlags_NoMove |
+			ImGuiWindowFlags_NoBringToFrontOnFocus |
+			ImGuiWindowFlags_NoNavFocus;
 
-			func();
+		// Main window configs
+		ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(viewport->Pos);
+		ImGui::SetNextWindowSize(viewport->Size);
+		ImGui::SetNextWindowViewport(viewport->ID);
 
-			ImGui::EndDockspace();
-		}
+		// Create main window for dockspace
+		ImGui::Begin("Dockspace demo", (bool*)true, window_flags);
 
+		// Crate dockspace
+		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+
+		func();
+
+		// End main window
 		ImGui::End();
 	}
 
@@ -465,19 +485,14 @@ int main(int argc, char** argv)
 		// ImGui stuff
 		imgui.Update(deltaClock.restart());
 
-		imgui.CreateWindow([&]() {
-			if (ImGui::BeginDock("testi"))
-			{
-				ImGui::Text("MORO");
-			}
-			ImGui::EndDock();
+		imgui.CreateDockspace([&]()
+		{
+			ImGui::Begin("Testi");
+			
+			viewportSize = ImGui::GetWindowSize();
+			ImGui::Image(renderTexture);
 
-			if (ImGui::BeginDock("viewport"))
-			{
-				viewportSize = ImGui::GetWindowSize();
-				ImGui::Image(renderTexture);
-			}
-			ImGui::EndDock();
+			ImGui::End();
 		});
 
 		window.Update([&]() 

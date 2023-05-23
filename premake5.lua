@@ -3,7 +3,7 @@ workspace "SFMLAstar"
    configurations { "Debug", "Release" }
 
     group "Dependencies"
-        include "vendor/ImGui"
+        include "vendor/SFML_ImGui_Dock"
     group ""
 
 project "SFMLAstar"
@@ -21,14 +21,13 @@ project "SFMLAstar"
       includedirs
       { 
         "vendor/SFML/include",
-        "vendor/ImGui",
-        "vendor/ImGui-SFML"
+        "vendor/SFML_ImGui_Dock"
     }
 
       libdirs { "vendor/SFML/lib" }
 
       links {
-        "ImGui",
+        "SFML_ImGui_Dock",
          "opengl32",
          "freetype",
          "winmm",

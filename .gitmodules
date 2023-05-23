@@ -1,0 +1,3 @@
+[submodule "vendor/SFML_ImGui_Dock"]
+	path = vendor/SFML_ImGui_Dock
+	url = https://github.com/Vilska/SFML_ImGui_Dock.git
