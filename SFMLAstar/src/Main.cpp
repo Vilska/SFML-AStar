@@ -57,7 +57,7 @@ public:
 	sf::Vector2f GridWorldSize;
 	float NodeDiameter;
 	int Diagonal;
-	sf::Vector2f StartingPoint = { 1920 / 3, 1080 / 5 };
+	sf::Vector2f StartingPoint = { 0, 0};
 
 	std::map<std::tuple<float, float>, Node> Nodes;
 	std::vector<Node*> Path;
@@ -419,44 +419,62 @@ int main(int argc, char** argv)
 	int index = 0;
 	std::vector<Node> startTargetNodes;
 
+	// RenderTexture
+	sf::RenderTexture renderTexture;
+	renderTexture.create(700, 700);
+
+	sf::Sprite sprite(renderTexture.getTexture());
+
+	renderTexture.clear(sf::Color::White);
+
+	for (auto& node : grid.Nodes)
+	{
+		renderTexture.draw(node.second.Shape);
+	}
+
+	renderTexture.display();
+
+	sf::Vector2f viewportSize(0.0f, 0.0f);
+	sf::Vector2f orgViewportSize(1.0f, 1.0f);
+
 	// Clock for deltaTime
 	sf::Clock deltaClock;
 
 	while (running)
 	{
 		window.CheckEvent([&](const sf::Event& event)
-		{
-			// Pass events to ImGui
-			imgui.ProcessEvent(event);
-
-			// Close window when it is supposed to going to be closed
-			if (event.type == sf::Event::Closed)
 			{
-				window.Close();
-				running = false;
-			}
+				// Pass events to ImGui
+				imgui.ProcessEvent(event);
 
-			// Listen for two mouse clicks and set startNode and targetNode
-			if (event.type == sf::Event::MouseButtonPressed)
-			{
-				if (index > 1)
-					return;
+				// Close window when it is supposed to going to be closed
+				if (event.type == sf::Event::Closed)
+				{
+					window.Close();
+					running = false;
+				}
 
-				if (event.mouseButton.button != sf::Mouse::Button::Left)
-					return;
+				// Listen for two mouse clicks and set startNode and targetNode
+				if (event.type == sf::Event::MouseButtonPressed)
+				{
+					if (index > 1)
+						return;
 
-				sf::Vector2f mousePosition = { (float)event.mouseButton.x, (float)event.mouseButton.y };
-				Node& clickedNode = grid.NodeFromWorldPoint(mousePosition);
+					if (event.mouseButton.button != sf::Mouse::Button::Left)
+						return;
 
-				if (!clickedNode.Walkable)
-					return;
+					sf::Vector2f mousePosition = { (float)event.mouseButton.x, (float)event.mouseButton.y };
+					Node& clickedNode = grid.NodeFromWorldPoint(mousePosition);
 
-				clickedNode.Shape.setFillColor(sf::Color::Cyan);
-				startTargetNodes.push_back(clickedNode);
+					if (!clickedNode.Walkable)
+						return;
 
-				index++;
-			}
-		});
+					clickedNode.Shape.setFillColor(sf::Color::Cyan);
+					startTargetNodes.push_back(clickedNode);
+
+					index++;
+				}
+			});
 
 		if (index == 3)
 		{
@@ -468,46 +486,48 @@ int main(int argc, char** argv)
 			index++;
 		}
 
-
-		// Viewport as texture
-		static ImVec2 viewportSize{ 500, 500 };
-		sf::RenderTexture renderTexture{};
-		renderTexture.create(viewportSize.x, viewportSize.y);
-		renderTexture.clear(sf::Color::Black);
-
-		for (auto& pair : grid.Nodes)
-		{
-			Node& node = pair.second;
-
-			renderTexture.draw(node.Shape);
-		}
-
-		// ImGui stuff
+		//ImGui stuff
 		imgui.Update(deltaClock.restart());
 
 		imgui.CreateDockspace([&]()
 		{
+			// Properties panel
+			ImGui::Begin("Properties");
+			ImGui::Text("This is a properties panel!");
+			ImGui::End();
+
+			// Viewport
 			ImGui::Begin("Testi");
-			
-			viewportSize = ImGui::GetWindowSize();
-			ImGui::Image(renderTexture);
+
+			if (viewportSize.x <= orgViewportSize.x || viewportSize.y <= orgViewportSize.y)
+			{
+				if (viewportSize.x == 0 && viewportSize.y == 0)
+				{
+					orgViewportSize = sf::Vector2f(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
+					viewportSize = orgViewportSize;
+					ImGui::End();
+					return;
+				}
+
+				float scaleX = (viewportSize.x / orgViewportSize.x);
+				float scaleY = (viewportSize.y / orgViewportSize.y);
+				float scale = std::min(scaleX, scaleY);
+
+				sprite.setScale({ scale, scale });
+			}
+
+			ImGui::Image(sprite);
+			viewportSize = sf::Vector2f(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
 
 			ImGui::End();
 		});
 
-		window.Update([&]() 
+		window.Update([&]()
 		{
-			for (auto& pair : grid.Nodes)
-			{
-				Node& node = pair.second;
-
-				// Draw shapes
-				//window.Draw(node.Shape);
-
-				// Draw ImGui
-				imgui.Render();
-			}
+			// Draw ImGui
+			imgui.Render();
 		});
+
 
 		// Find path when both startNode and targetNode are specified
 		if (index == 2)
