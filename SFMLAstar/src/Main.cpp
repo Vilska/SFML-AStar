@@ -421,18 +421,7 @@ int main(int argc, char** argv)
 
 	// RenderTexture
 	sf::RenderTexture renderTexture;
-	renderTexture.create(700, 700);
-
-	sf::Sprite sprite(renderTexture.getTexture());
-
-	renderTexture.clear(sf::Color::White);
-
-	for (auto& node : grid.Nodes)
-	{
-		renderTexture.draw(node.second.Shape);
-	}
-
-	renderTexture.display();
+	renderTexture.create(0, 0);
 
 	sf::Vector2f viewportSize(0.0f, 0.0f);
 	sf::Vector2f orgViewportSize(1.0f, 1.0f);
@@ -513,10 +502,20 @@ int main(int argc, char** argv)
 				float scaleY = (viewportSize.y / orgViewportSize.y);
 				float scale = std::min(scaleX, scaleY);
 
-				sprite.setScale({ scale, scale });
+				renderTexture.create((orgViewportSize.x - 100) * scale, (orgViewportSize.y - 100) * scale);
+				renderTexture.clear(sf::Color::Black);
+
+				for (auto node : grid.Nodes)
+				{
+					node.second.Shape.setPosition(node.second.Shape.getPosition().x * scale, node.second.Shape.getPosition().y * scale);
+					node.second.Shape.setScale(scale, scale);
+					renderTexture.draw(node.second.Shape);
+				}
+
+				renderTexture.display();
 			}
 
-			ImGui::Image(sprite);
+			ImGui::Image(renderTexture);
 			viewportSize = sf::Vector2f(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y);
 
 			ImGui::End();
