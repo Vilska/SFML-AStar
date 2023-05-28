@@ -2,6 +2,8 @@
 #include "../ImGui/GUI.h"
 #include "../Grid/Pathfinding.h"
 
+#include <iostream>
+
 // Main function
 int main(int argc, char** argv)
 {
@@ -15,7 +17,7 @@ int main(int argc, char** argv)
 	GUI gui(window.GetWindow());
 
 	// Create grid
-	Grid grid(sf::Vector2f(600, 200), sf::Vector2f(600, 600), 80);
+	Grid grid(sf::Vector2f(500, 100), sf::Vector2f(640, 640), 80);
 
 	// Create pathfind
 	Pathfinding pathfinding(grid);
@@ -33,6 +35,13 @@ int main(int argc, char** argv)
 
 	// Clock for deltaTime
 	sf::Clock deltaClock;
+
+	//float startIndex = 0;
+
+	//sf::RectangleShape shape({640, 640});
+	//shape.setPosition({ 500, 100 });
+
+	float scale = 0;
 
 	while (running)
 	{
@@ -57,8 +66,15 @@ int main(int argc, char** argv)
 					if (event.mouseButton.button != sf::Mouse::Button::Left)
 						return;
 
-					sf::Vector2f mousePosition = { (float)event.mouseButton.x, (float)event.mouseButton.y };
-					Node& clickedNode = grid.NodeFromWorldPoint(mousePosition);
+					float actualStartPosX = window.GetWindow().getSize().x - viewportSize.x;
+
+					// Y MOUSE POSITION JATKA TÄSTÄ
+					sf::Vector2f actualMousePosition = { ((float)event.mouseButton.x - actualStartPosX) / scale, (float)event.mouseButton.y };
+
+					std::cout << event.mouseButton.x << " " << event.mouseButton.y << std::endl;
+					std::cout << actualMousePosition.x << " " << actualMousePosition.y << std::endl;
+
+					Node& clickedNode = grid.NodeFromWorldPoint(actualMousePosition);
 
 					if (!clickedNode.GetWalkable())
 						return;
@@ -66,7 +82,7 @@ int main(int argc, char** argv)
 					clickedNode.GetShape().setFillColor(sf::Color::Cyan);
 					startTargetNodes.push_back(clickedNode);
 
-					index++;
+					//index++;
 				}
 			});
 
@@ -88,6 +104,7 @@ int main(int argc, char** argv)
 			// Properties panel
 			ImGui::Begin("Properties");
 			ImGui::Text("This is a properties panel!");
+
 			ImGui::End();
 
 			// Viewport
@@ -104,11 +121,14 @@ int main(int argc, char** argv)
 
 			float scaleX = (viewportSize.x / orgViewportSize.x);
 			float scaleY = (viewportSize.y / orgViewportSize.y);
-			float scale = std::min(scaleX, scaleY);
+			scale = std::min(scaleX, scaleY );
 
 			renderTexture.create((orgViewportSize.x) * scale, (orgViewportSize.y) * scale);
+			renderTexture.clear(sf::Color::Yellow);
 
-			for (auto node : grid.GetNodes())
+			// JATKA TÄSTÄ SKAALAAMISESSA ONGELMIA SCENEN ALKAESSA (EKA FRAME->)
+
+			for (auto& node : grid.GetNodes())
 			{
 				auto& shape = node.second.GetShape();
 				shape.setPosition(shape.getPosition().x * scale, shape.getPosition().y * scale);

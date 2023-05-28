@@ -44,6 +44,7 @@ void GUI::CreateDockspace(const std::function<void()>& func)
 	ImGui::SetNextWindowViewport(viewport->ID);
 
 	// Create main window for dockspace
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0, 0 });
 	ImGui::Begin("Dockspace demo", (bool*)true, window_flags);
 
 	// Crate dockspace
@@ -54,6 +55,7 @@ void GUI::CreateDockspace(const std::function<void()>& func)
 
 	// End main window
 	ImGui::End();
+	ImGui::PopStyleVar();
 }
 
 // Handle updating
