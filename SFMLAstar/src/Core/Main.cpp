@@ -26,22 +26,11 @@ int main(int argc, char** argv)
 	int index = 0;
 	std::vector<Node> startTargetNodes;
 
-	// RenderTexture
-	sf::RenderTexture renderTexture;
-	renderTexture.create(1.0f, 1.0f);
-
 	// Clock for deltaTime
 	sf::Clock deltaClock;
 
-	// TESTI
-
-	sf::Vector2f originalWindowSize = { (float)window.GetWindow().getSize().x, (float)window.GetWindow().getSize().y };
-	sf::Vector2f newViewportSize = { 0, 0 };
-
-	float scale = 0;
-
-	float posY = 0;
-	float orgPosY = 0;
+	// Window flags for "subwindows"
+	ImGuiWindowFlags subWindowFlags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
 
 	while (running)
 	{
@@ -60,7 +49,7 @@ int main(int argc, char** argv)
 				running = false;
 			}
 
-			// Listen for two mouse clicks and set startNode and targetNode
+			//Listen for two mouse clicks and set startNode and targetNode
 			if (event.type == sf::Event::MouseButtonPressed)
 			{
 				if (index > 1)
@@ -69,14 +58,8 @@ int main(int argc, char** argv)
 				if (event.mouseButton.button != sf::Mouse::Button::Left)
 					return;
 
-				float actualStartPosX = (window.GetWindow().getSize().x - newViewportSize.x);
-				float actualStatPosY = posY / orgPosY;
-
-				sf::Vector2f actualMousePosition = { ((float)event.mouseButton.x - actualStartPosX) / scale, ((float)event.mouseButton.y - 35) / actualStatPosY}; // 35 offset on Y 
+				auto actualMousePosition = gui.GetViewportMousePosition({ event.mouseButton.x, event.mouseButton.y });
 				Node& clickedNode = grid.NodeFromWorldPoint(actualMousePosition);
-
-				std::cout << event.mouseButton.x << " " << event.mouseButton.y << std::endl;
-				std::cout << actualMousePosition.x << " " << actualMousePosition.y << std::endl;
 
 				if (!clickedNode.GetWalkable())
 					return;
@@ -84,76 +67,50 @@ int main(int argc, char** argv)
 				clickedNode.GetShape().setFillColor(sf::Color::Cyan);
 				startTargetNodes.push_back(clickedNode);
 
-				//index++;
+				index++;
 			}
 		});
 
-		if (index == 3)
-		{
-			for (auto& pathNode : grid.GetPath())
-			{
-				(*pathNode).GetShape().setFillColor(sf::Color::Magenta);
-			}
-
-			index++;
-		}
-
+		// Create dockspace lambda
 		gui.CreateDockspace([&]()
-		{
+		{		
 			// Properties panel
-			ImGui::Begin("Properties");
-			ImGui::Text("This is a properties panel!");
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
+
+			ImGui::Begin("Properties", (bool*)true, subWindowFlags);
+
+			ImGui::SetCursorPos(ImVec2(ImGui::GetWindowSize().x / 6, 45));
+			ImGui::PushTextWrapPos(200.0f);
+			ImGui::TextWrapped("Select two nodes from the grid and the program will draw the shortest path between those two nodes using A* algorithm.");
+			ImGui::PopTextWrapPos();
+
+			ImGui::SetCursorPos(ImVec2(ImGui::GetWindowSize().x / 5, 150));
+			if (ImGui::Button("Reset", ImVec2(128.0f, 32.0f)))
+			{
+				// Reset some of those vectors
+				index = 0;
+				grid.CreateGrid();
+				grid.ClearPath();
+				startTargetNodes.clear();
+			}
 
 			ImGui::End();
+			ImGui::PopStyleVar();
 
 			// Viewport
-			ImGui::Begin("Testi");
+			ImGui::Begin("Viewport", (bool*)true, subWindowFlags);
 
-			// Assign window size to variable for later calculations
-			sf::Vector2f windowSize = *(sf::Vector2f*)&window.GetWindow().getSize();
-			newViewportSize = *(sf::Vector2f*)&ImGui::GetWindowSize();
-
-			// Calculate scale values for correct scaling & positioning
-			float scaleX = newViewportSize.x / originalWindowSize.x;
-			float scaleY = newViewportSize.y / originalWindowSize.y;
-			scale = std::min(scaleX, scaleY);
-
-			renderTexture.create(newViewportSize.x, newViewportSize.y);
-
-			// Iterate through nodes and draw them dynamically to correct position
-			for (auto& node : grid.GetNodes())
+			// Create viewport and draw nodes to it
+			gui.CreateViewport([&](float scale, sf::RenderTexture& renderTexture)
 			{
-				auto shapeX = node.second.GetShape();
-				shapeX.setScale(scale, scale);
-				shapeX.setPosition(shapeX.getPosition().x * scale, shapeX.getPosition().y * scale);
-				renderTexture.draw(shapeX);
-			}
-
-			// JÄNIS
-			sf::RectangleShape shape;
-			shape.setPosition(600, 200);
-			shape.setSize({ 640, 640 });
-			shape.setFillColor(sf::Color::Transparent);
-
-			static int counter = 0;
-			if (counter == 0)
-			{
-				orgPosY = shape.getPosition().y;
-				posY = orgPosY;
-				counter++;
-			}
-
-			shape.setScale(scale, scale);
-			shape.setPosition(shape.getPosition().x* scale, shape.getPosition().y* scale);
-
-			posY = shape.getPosition().y;
-
-			renderTexture.draw(shape);
-
-			// Display render texture
-			renderTexture.display();
-
-			ImGui::Image(renderTexture);
+				for (auto& node : grid.GetNodes())
+				{
+					auto shape = node.second.GetShape();
+					shape.setScale(scale, scale);
+					shape.setPosition(shape.getPosition().x * scale, shape.getPosition().y * scale);
+					renderTexture.draw(shape);
+				}
+			});
 
 			ImGui::End();
 		});
@@ -170,6 +127,16 @@ int main(int argc, char** argv)
 		if (index == 2)
 		{
 			pathfinding.FindPath(startTargetNodes[0].GetWorldPosition(), startTargetNodes[1].GetWorldPosition());
+			index++;
+		}
+
+		if (index == 3)
+		{
+			for (auto& pathNode : grid.GetPath())
+			{
+				(*pathNode).GetShape().setFillColor(sf::Color::Magenta);
+			}
+
 			index++;
 		}
 	}

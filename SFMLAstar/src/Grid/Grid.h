@@ -17,11 +17,12 @@ public:
 	int GetNodeDiagonal() const { return m_Diagonal; }
 	std::vector<Node*> GetNeighbours(const Node& node);
 	std::vector<Node*> GetPath() const { return m_Path; }
-
 	const std::map<std::tuple<float, float>, Node>& GetNodes() const { return m_Nodes; }
 	std::map<std::tuple<float, float>, Node>& GetNodes() { return m_Nodes; }
 
 	void SetPath(std::vector<Node*>& nodes) { m_Path = nodes; }
+
+	void ClearPath() { m_Path.clear(); }
 private:
 	int m_Diagonal;
 	int m_NodeDiameter;

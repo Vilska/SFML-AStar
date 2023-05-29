@@ -1,5 +1,6 @@
 #include "Grid.h"
 
+// Constructor
 Grid::Grid(const sf::Vector2f& startingPoint, const sf::Vector2f& gridWorldSize, int diameter)
 	: m_StartingPoint(startingPoint), m_GridWorldSize(gridWorldSize), m_NodeDiameter(diameter)
 {

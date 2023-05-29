@@ -29,7 +29,6 @@ public:
 		return (m_WorldPosition == node.m_WorldPosition);
 	}
 private:
-	// Variables
 	bool m_Walkable;
 	float m_Diameter;
 	int m_gCost, m_hCost;

@@ -2,6 +2,7 @@
 
 #include "Window.h"
 
+// Constructor
 Window::Window(const sf::Vector2f& windowSize, const std::string& windowLabel)
 {
 	m_Window = new sf::RenderWindow(sf::VideoMode(windowSize.x, windowSize.y), windowLabel);

@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics.hpp>
 
 class Window
 {
@@ -24,7 +24,6 @@ public:
 	void CheckEvent(const std::function<void(const sf::Event)>& func);
 
 	sf::RenderWindow& GetWindow() const { return *m_Window; }
-
 private:
 	sf::RenderWindow* m_Window;
 };
