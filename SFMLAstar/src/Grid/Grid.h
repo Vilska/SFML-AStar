@@ -17,7 +17,9 @@ public:
 	int GetNodeDiagonal() const { return m_Diagonal; }
 	std::vector<Node*> GetNeighbours(const Node& node);
 	std::vector<Node*> GetPath() const { return m_Path; }
-	std::map<std::tuple<float, float>, Node> GetNodes() const { return m_Nodes; }
+
+	const std::map<std::tuple<float, float>, Node>& GetNodes() const { return m_Nodes; }
+	std::map<std::tuple<float, float>, Node>& GetNodes() { return m_Nodes; }
 
 	void SetPath(std::vector<Node*>& nodes) { m_Path = nodes; }
 private:
